@@ -1,23 +1,41 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.33414.496
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "RFIDdoor_DATAlogger", "RFIDdoor_DATAlogger\RFIDdoor_DATAlogger.pyproj", "{DC2094B3-1B24-4D11-B970-62CCD8D55842}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DC2094B3-1B24-4D11-B970-62CCD8D55842}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DC2094B3-1B24-4D11-B970-62CCD8D55842}.Release|Any CPU.ActiveCfg = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {BEB1BFDB-4C61-4211-83CB-1292BEDFC756}
-	EndGlobalSection
-EndGlobal
+import serial.tools.list_ports
+
+import csv
+import time
+import datetime
+
+import serial.tools.list_ports
+header = ['Date','time','id number']
+ports = serial.tools.list_ports.comports()
+serialInst = serial.Serial()
+
+portsList = []
+fileName="RFIDlog-data.csv"
+for onePort in ports:
+    portsList.append(str(onePort))
+    print(str(onePort))
+
+val = input("Select Port: COM")
+
+for x in range(0,len(portsList)):
+    if portsList[x].startswith("COM" + str(val)):
+        portVar = "COM" + str(val)
+        print(portVar)
+
+serialInst.baudrate = 9600
+serialInst.port = portVar
+serialInst.open()
+
+with open(fileName, 'a', encoding='UTF8', newline='') as f:
+    writer = csv.DictWriter(f, fieldnames=header)
+    writer.writeheader()
+
+while True:
+    if serialInst.in_waiting:
+        packet = serialInst.readline()
+        data = packet.decode('utf').rstrip('\n')
+        print(data)
+        with open(fileName, 'a', encoding='UTF8', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=header)
+            writer.writerow({'Date': datetime.date.today(), 'time': time.strftime("%H:%M:%S", time.localtime()), 'id number': data})
+ 
